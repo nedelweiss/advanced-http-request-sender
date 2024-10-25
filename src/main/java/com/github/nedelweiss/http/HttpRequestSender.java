@@ -29,10 +29,10 @@ public class HttpRequestSender {
         for (UriParameter parameter : uriComponentsHolder.getParameters()) {
             uriBuilder.addParameter(parameter);
         }
-        return sendHttpRequest(method, headers, URI.create(uriBuilder.build()), bodyPublishers);
+        return send(method, headers, URI.create(uriBuilder.build()), bodyPublishers);
     }
 
-    private HttpResponse<String> sendHttpRequest(
+    public HttpResponse<String> send(
         HttpMethod method,
         Map<String, String> headers,
         URI uri,

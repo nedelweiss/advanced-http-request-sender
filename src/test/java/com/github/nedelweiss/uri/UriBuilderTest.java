@@ -8,7 +8,7 @@ import static com.github.nedelweiss.uri.UriBuilder.EMPTY_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class UriBuilderTest {
+public class UriBuilderTest {
 
     public static final String API_CONTEXT = "http://testhost.com";
     public static final String API_METHOD = "/test";

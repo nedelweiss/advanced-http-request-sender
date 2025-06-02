@@ -11,6 +11,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Map;
 
+// TODO: fix tests
 public class HttpRequestSender {
 
     private final HttpClient httpClient;
@@ -25,8 +26,16 @@ public class HttpRequestSender {
         UriComponentsHolder uriComponentsHolder,
         HttpRequest.BodyPublisher... bodyPublishers
     ) throws IOException, InterruptedException {
-        UriBuilder uriBuilder = new UriBuilder(uriComponentsHolder.getApiContext(), uriComponentsHolder.getApiMethod());
-        for (UriParameter parameter : uriComponentsHolder.getParameters()) {
+        String apiContext = uriComponentsHolder.getApiContext();
+        String apiMethod = uriComponentsHolder.getApiMethod();
+        UriParameter[] parameters = uriComponentsHolder.getParameters();
+
+        if (parameters == null) {
+            return send(method, headers, URI.create(apiContext + apiMethod), bodyPublishers);
+        }
+
+        UriBuilder uriBuilder = new UriBuilder(apiContext, apiMethod);
+        for (UriParameter parameter : parameters) {
             uriBuilder.addParameter(parameter);
         }
         return send(method, headers, URI.create(uriBuilder.build()), bodyPublishers);
@@ -50,7 +59,10 @@ public class HttpRequestSender {
         HttpRequest.Builder request = HttpRequest.newBuilder()
             .uri(uri);
         applyHttpMethod(request, method, bodyPublishers);
-        applyHeaders(request, headers);
+
+        if (headers != null && !headers.isEmpty()) {
+            applyHeaders(request, headers);
+        }
 
         return request.build();
     }
@@ -61,16 +73,17 @@ public class HttpRequestSender {
         HttpRequest.BodyPublisher[] bodyPublishers
     ) {
         boolean noBodyFlag = bodyPublishers.length == 0;
-        if (HttpMethod.GET.equals(method) && noBodyFlag) {
+        boolean noContentLength = !noBodyFlag && bodyPublishers[0].contentLength() == 0;
+
+        if (HttpMethod.GET.equals(method) && (noBodyFlag || noContentLength)) {
             request.GET();
-        } else if (HttpMethod.DELETE.equals(method) && noBodyFlag) {
+        } else if (HttpMethod.DELETE.equals(method) && (noBodyFlag || noContentLength)) {
             request.DELETE();
         } else {
-            boolean bodyFlag = bodyPublishers.length == 1;
             HttpRequest.BodyPublisher bodyPublisher = bodyPublishers[0];
-            if (HttpMethod.POST.equals(method) && bodyFlag) {
+            if (HttpMethod.POST.equals(method)) {
                 request.POST(bodyPublisher);
-            } else if (HttpMethod.PUT.equals(method) && bodyFlag) {
+            } else if (HttpMethod.PUT.equals(method)) {
                 request.PUT(bodyPublisher);
             }
         }
